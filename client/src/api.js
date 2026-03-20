@@ -23,6 +23,12 @@ export const reorderTasks = (orderedIds) =>
 
 export const fetchCompleted = (date) =>
   request(`/completed${date ? `?date=${date}` : ''}`);
+export const updateCompleted = (id, updates) =>
+  request(`/completed/${id}`, { method: 'PUT', body: JSON.stringify(updates) });
+export const deleteCompleted = (id) =>
+  request(`/completed/${id}`, { method: 'DELETE' });
+export const squashCompleted = (taskIds, text) =>
+  request('/completed/squash', { method: 'POST', body: JSON.stringify({ taskIds, text }) });
 
 export const checkRollover = () => request('/rollover/check');
 export const executeRollover = () => request('/rollover/execute', { method: 'POST' });

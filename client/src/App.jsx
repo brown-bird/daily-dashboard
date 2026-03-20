@@ -12,6 +12,8 @@ export default function App() {
   const [completedToday, setCompletedToday] = useState([]);
   const [carryover, setCarryover] = useState([]);
   const [showStandup, setShowStandup] = useState(false);
+  const [squashMode, setSquashMode] = useState(false);
+  const [selectedForSquash, setSelectedForSquash] = useState(new Set());
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -56,6 +58,40 @@ export default function App() {
   const handleDelete = async (id) => {
     await api.deleteTask(id);
     setTasks(prev => prev.filter(t => t.id !== id));
+  };
+
+  const handleUpdateCompleted = async (id, updates) => {
+    const updated = await api.updateCompleted(id, updates);
+    setCompletedToday(prev => prev.map(t => t.id === id ? updated : t));
+  };
+
+  const handleDeleteCompleted = async (id) => {
+    await api.deleteCompleted(id);
+    setCompletedToday(prev => prev.filter(t => t.id !== id));
+  };
+
+  const handleSquash = async (summaryText) => {
+    const merged = await api.squashCompleted([...selectedForSquash], summaryText);
+    setCompletedToday(prev => [
+      ...prev.filter(t => !selectedForSquash.has(t.id)),
+      merged
+    ]);
+    setSquashMode(false);
+    setSelectedForSquash(new Set());
+  };
+
+  const toggleSquashMode = () => {
+    setSquashMode(m => !m);
+    setSelectedForSquash(new Set());
+  };
+
+  const toggleSquashSelection = (id) => {
+    setSelectedForSquash(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   const handleReorder = async (reorderedTasks) => {
@@ -113,7 +149,16 @@ export default function App() {
           />
         </section>
 
-        <CompletedList tasks={completedToday} />
+        <CompletedList
+          tasks={completedToday}
+          onUpdate={handleUpdateCompleted}
+          onDelete={handleDeleteCompleted}
+          squashMode={squashMode}
+          selectedForSquash={selectedForSquash}
+          onToggleSquashMode={toggleSquashMode}
+          onToggleSquashSelection={toggleSquashSelection}
+          onSquash={handleSquash}
+        />
       </main>
 
       <footer className="app-footer">
