@@ -53,7 +53,7 @@ A minimal API server whose only job is reading/writing text files and exposing t
 | POST | /api/tasks/:id/start | Move a task from pending to in-progress |
 | POST | /api/tasks/:id/unstart | Move a task from in-progress back to pending |
 | POST | /api/tasks/:id/complete | Move a task from today to completed (with timestamp) |
-| POST | /api/tasks/:id/uncomplete | Reopen a completed task as in-progress |
+| POST | /api/tasks/:id/uncomplete | Reopen a completed task; optional `status` body param (`in-progress` default, or `pending`) |
 | PUT | /api/tasks/reorder | Rewrite today.txt in the given order |
 | GET | /api/completed?date=YYYY-MM-DD | Return completed tasks, optionally filtered by date |
 | PUT | /api/completed/:id | Update a completed task's text or type |
@@ -131,18 +131,19 @@ The primary interface. Shows today's tasks in three vertical sections: **Todo**,
 
 Tasks progress through three states in a single vertical column:
 - **Todo** (top): New and pending tasks. Actions: "Start" (→ In Progress), "Complete" (→ Done).
-- **In Progress** (middle): Tasks actively being worked on. Actions: "Back" (→ Todo), "Done" (→ Done).
-- **Done today** (bottom): Completed tasks with strikethrough styling. Actions: "Reopen" (→ In Progress).
+- **In Progress** (middle): Tasks actively being worked on. Actions: "Todo" (→ Todo), "Done" (→ Done).
+- **Done today** (bottom): Completed tasks with strikethrough styling. Actions: "In-progress" (→ In Progress), "Todo" (→ Todo).
 
-The normal flow is Todo → In Progress → Done, but tasks can skip steps (e.g., complete directly from Todo) or move backwards (e.g., reopen from Done to In Progress).
+The normal flow is Todo → In Progress → Done, but tasks can skip steps (e.g., complete directly from Todo) or move backwards at any point.
 
 **Behaviors:**
 
 - **Add task:** Text input at top of the page. Pressing Enter or clicking Add creates the task with a pending status and current timestamp. New tasks appear in the Todo section.
 - **Start task:** "Start" button moves a task from Todo to In Progress (sets status to in-progress).
 - **Complete task:** "Complete" or "Done" button moves a task from Todo or In Progress to Done (moves from today.txt to completed.txt with completed_timestamp).
-- **Reopen task:** "Reopen" button on a completed task moves it back to In Progress (removes from completed.txt, adds to today.txt with in-progress status).
-- **Move back:** "Back" button on an In Progress task moves it back to Todo (sets status back to pending).
+- **Reopen to In Progress:** "In-progress" button on a completed task moves it back to In Progress (removes from completed.txt, adds to today.txt with in-progress status).
+- **Reopen to Todo:** "Todo" button on a completed task moves it directly back to Todo (removes from completed.txt, adds to today.txt with pending status).
+- **Move back:** "Todo" button on an In Progress task moves it back to Todo (sets status back to pending).
 - **Edit task:** Inline editing -- click the task text to modify it. Saves on blur or Enter. Cancel with Escape. Works in all three sections.
 - **Delete task:** Remove without completing. Delete button appears on hover. Works in all three sections.
 - **Reorder:** Drag-and-drop to set priority order within both the Todo and In Progress sections independently.
@@ -230,7 +231,32 @@ data/
 
 All files are created automatically by the server if they don't exist.
 
-## 5. UI Layout
+## 5. Running the App
+
+### General use (production mode)
+
+The Express server serves both the API and the pre-built client from a single process:
+
+```bash
+npm run build   # Build the React client into client/dist/ (run once, or after pulling changes)
+npm start       # Start the server at http://localhost:3001
+```
+
+The server resolves `client/dist/` as static files and falls back to `index.html` for SPA routing. No separate client process needed.
+
+### Development
+
+```bash
+npm run dev     # Starts both the Express server (nodemon) and the Vite dev server concurrently
+```
+
+The Vite dev server proxies `/api` requests to `localhost:3001`. Hot module reload is available for the client.
+
+### Port
+
+Defaults to `3001`. Override with `PORT=XXXX npm start`.
+
+## 6. UI Layout
 
 ```
 +--------------------------------------------------+
@@ -252,10 +278,10 @@ All files are created automatically by the server if they don't exist.
 |  :: Update API docs         [Start] [Complete] x  |
 |                                                   |
 |  IN PROGRESS                                      |
-|  :: Review PR #482          [Back] [Done]      x  |
+|  :: Review PR #482          [Todo] [Done]      x  |
 |                                                   |
 |  DONE TODAY                            [Squash]   |
-|  [check] Set up staging environment  [Reopen]     |
+|  [check] Set up staging env  [In-progress][Todo]  |
 |                                         10:30 AM  |
 |                                                   |
 +--------------------------------------------------+
@@ -263,7 +289,7 @@ All files are created automatically by the server if they don't exist.
 +--------------------------------------------------+
 ```
 
-## 6. Technical Decisions
+## 7. Technical Decisions
 
 | Decision | Rationale |
 |----------|-----------|
@@ -276,7 +302,7 @@ All files are created automatically by the server if they don't exist.
 | React SPA with Vite | Appropriate for a single-purpose interactive app. Fast dev experience. |
 | Squash on completed tasks | Allows consolidating granular work items into meaningful summaries for standups. |
 
-## 7. Future Considerations (Out of Scope for v1)
+## 8. Future Considerations (Out of Scope for v1)
 
 - Weekly/monthly review: Aggregate completed.txt to show productivity patterns
 - Planned vs. unplanned ratio: Weekly view showing what percentage of completed work was reactive

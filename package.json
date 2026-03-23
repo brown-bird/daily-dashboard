@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node server/index.js",
+    "build": "cd client && npm run build",
     "dev:server": "cd server && npx nodemon index.js",
     "dev:client": "cd client && npx vite",
     "dev": "npx concurrently \"npm run dev:server\" \"npm run dev:client\""
