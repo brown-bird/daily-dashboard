@@ -20,7 +20,7 @@ app.use('/api/standup', standupRouter);
 app.use('/api', rolloverRouter);
 
 app.use(express.static(DIST));
-app.get('*', (req, res) => res.sendFile(path.join(DIST, 'index.html')));
+app.get('/{*path}', (req, res) => res.sendFile(path.join(DIST, 'index.html')));
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
