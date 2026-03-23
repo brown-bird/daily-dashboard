@@ -42,12 +42,4 @@ export const deleteCompleted = (id) =>
 export const squashCompleted = (taskIds, text) =>
   request('/completed/squash', { method: 'POST', body: JSON.stringify({ taskIds, text }) });
 
-export const checkRollover = () => request(addTz('/rollover/check'));
-export const executeRollover = () => request(addTz('/rollover/execute'), { method: 'POST' });
-export const fetchCarryover = () => request('/carryover');
-export const acceptCarryover = (id) =>
-  request(`/carryover/${id}/accept`, { method: 'POST' });
-export const dropCarryover = (id) =>
-  request(`/carryover/${id}/drop`, { method: 'POST' });
-
 export const fetchStandup = () => request('/standup');

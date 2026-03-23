@@ -29,7 +29,6 @@ router.get('/', (req, res) => {
 
   const completedTasks = readTasks(FILES.COMPLETED);
   const todayTasks = readTasks(FILES.TODAY);
-  const carryoverTasks = readTasks(FILES.CARRYOVER);
 
   const yesterday = completedTasks.filter(t =>
     t.completed && t.completed.slice(0, 10) === yesterdayDate
@@ -71,20 +70,10 @@ router.get('/', (req, res) => {
     text += '\n';
   }
 
-  if (carryoverTasks.length > 0) {
-    text += '## Carried Over\n';
-    carryoverTasks.forEach(t => {
-      const fromDate = t.created.slice(0, 10);
-      text += `- \u26a0\ufe0f ${t.text} (from ${fromDate})\n`;
-    });
-    text += '\n';
-  }
-
   res.json({
     yesterday,
     today: todayTasks,
     completedToday,
-    carriedOver: carryoverTasks,
     generatedText: text.trim()
   });
 });

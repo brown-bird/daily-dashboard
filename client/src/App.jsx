@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import AddTask from './components/AddTask';
 import TaskList from './components/TaskList';
 import CompletedList from './components/CompletedList';
-import CarryoverBanner from './components/CarryoverBanner';
 import StandupSummary from './components/StandupSummary';
 import * as api from './api';
 import './styles/app.css';
@@ -10,7 +9,6 @@ import './styles/app.css';
 export default function App() {
   const [tasks, setTasks] = useState([]);
   const [completedToday, setCompletedToday] = useState([]);
-  const [carryover, setCarryover] = useState([]);
   const [showStandup, setShowStandup] = useState(false);
   const [squashMode, setSquashMode] = useState(false);
   const [selectedForSquash, setSelectedForSquash] = useState(new Set());
@@ -21,25 +19,16 @@ export default function App() {
   const inProgressTasks = tasks.filter(t => t.status === 'in-progress');
 
   const loadData = useCallback(async () => {
-    const [todayTasks, completed, carryoverTasks] = await Promise.all([
+    const [todayTasks, completed] = await Promise.all([
       api.fetchTasks(),
-      api.fetchCompleted(today),
-      api.fetchCarryover()
+      api.fetchCompleted(today)
     ]);
     setTasks(todayTasks);
     setCompletedToday(completed);
-    setCarryover(carryoverTasks);
   }, [today]);
 
   useEffect(() => {
-    async function init() {
-      const rollover = await api.checkRollover();
-      if (rollover.needed) {
-        await api.executeRollover();
-      }
-      await loadData();
-    }
-    init();
+    loadData();
   }, [loadData]);
 
   const handleAdd = async (text, type) => {
@@ -131,17 +120,6 @@ export default function App() {
     await api.reorderTasks(newTasks.map(t => t.id));
   };
 
-  const handleAcceptCarryover = async (id) => {
-    const task = await api.acceptCarryover(id);
-    setCarryover(prev => prev.filter(t => t.id !== id));
-    setTasks(prev => [...prev, task]);
-  };
-
-  const handleDropCarryover = async (id) => {
-    await api.dropCarryover(id);
-    setCarryover(prev => prev.filter(t => t.id !== id));
-  };
-
   const dateDisplay = new Date().toLocaleDateString([], {
     weekday: 'long',
     year: 'numeric',
@@ -162,12 +140,6 @@ export default function App() {
       </header>
 
       <main className="app-main">
-        <CarryoverBanner
-          tasks={carryover}
-          onAccept={handleAcceptCarryover}
-          onDrop={handleDropCarryover}
-        />
-
         <AddTask onAdd={handleAdd} />
 
         <section>

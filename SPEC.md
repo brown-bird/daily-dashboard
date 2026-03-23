@@ -33,7 +33,6 @@ React + Vite       <------------->      Node/Express
                                         Text Files (data/)
                                           today.txt
                                           completed.txt
-                                          carryover.txt
 ```
 
 ### 2.1 Backend (Thin Local Server)
@@ -60,11 +59,6 @@ A minimal API server whose only job is reading/writing text files and exposing t
 | DELETE | /api/completed/:id | Remove a completed task |
 | POST | /api/completed/squash | Merge multiple completed tasks into one |
 | GET | /api/standup | Generate standup payload (yesterday's completions + today's plan) |
-| GET | /api/rollover/check | Check if end-of-day rollover is needed |
-| POST | /api/rollover/execute | Trigger rollover: move incomplete tasks to carryover, clear today |
-| GET | /api/carryover | Return tasks carried over from previous days |
-| POST | /api/carryover/:id/accept | Move a carryover task into today's list |
-| POST | /api/carryover/:id/drop | Remove a carryover task (won't be done) |
 
 ### 2.2 Frontend (SPA)
 
@@ -84,7 +78,7 @@ id|created_timestamp|status|type|text
 |-------|--------|---------|
 | id | UUID v4 (first 8 chars) | a1b2c3d4 |
 | created_timestamp | ISO 8601 | 2026-03-20T08:15:00.000Z |
-| status | pending, in-progress, done, carried | pending |
+| status | pending, in-progress, done | pending |
 | type | planned or unplanned | planned |
 | text | Free-form task description | Review PR #482 for auth refactor |
 
@@ -109,17 +103,10 @@ f3a4b5c6|2026-03-19T08:00:00.000Z|done|planned|Set up staging environment for QA
 d7e8f9a0|2026-03-19T09:15:00.000Z|done|unplanned|Fix flaky integration test in CI|2026-03-19T11:45:00.000Z
 ```
 
-**Example carryover.txt:**
-
-```
-b1c2d3e4|2026-03-18T08:30:00.000Z|carried|planned|Update API docs for v2 endpoints
-```
-
 **File management rules:**
 
-- today.txt is cleared at rollover; incomplete tasks move to carryover.txt
+- today.txt persists pending and in-progress tasks across days — tasks remain until acted on
 - completed.txt is append-only and cumulative (all history)
-- carryover.txt holds incomplete tasks from any previous day until they're accepted into today or explicitly dropped
 
 ## 3. Features
 
@@ -147,8 +134,6 @@ The normal flow is Todo → In Progress → Done, but tasks can skip steps (e.g.
 - **Edit task:** Inline editing -- click the task text to modify it. Saves on blur or Enter. Cancel with Escape. Works in all three sections.
 - **Delete task:** Remove without completing. Delete button appears on hover. Works in all three sections.
 - **Reorder:** Drag-and-drop to set priority order within both the Todo and In Progress sections independently.
-
-**Carryover banner:** If carryover.txt has items when the app loads, show a notification section at the top: "You have N tasks carried over from previous days." Each carryover task has two actions: Pull into today (moves to today.txt as pending) or Drop (removes from carryover.txt).
 
 ### 3.2 Editable Completed Tasks
 
@@ -187,7 +172,6 @@ Generates a formatted summary for daily standups.
 1. App calls GET /api/standup which assembles:
    - **Yesterday:** All tasks from completed.txt where completed_timestamp falls on the previous workday
    - **Today:** All tasks currently in today.txt (the plan for the day). In-progress tasks are marked with a 🔄 indicator and listed before pending tasks.
-   - **Carried over:** Any items in carryover.txt (flagged as unfinished)
 2. Display the standup in a formatted preview panel
 3. User can review the text before copying
 4. Single button copies the formatted standup text to clipboard with visual confirmation
@@ -198,7 +182,6 @@ Generates a formatted summary for daily standups.
 
 - If today's list is empty, prompt the user to plan their day before generating the standup
 - On Monday, "Yesterday" references Friday
-- If there are no carryover items, that section is omitted
 
 ### 3.5 Add Tasks Throughout the Day
 
@@ -208,25 +191,12 @@ The add-task input is always immediately accessible at the top of the main view.
 
 New tasks added mid-day appear at the bottom of the active task list.
 
-### 3.6 Day Rollover
-
-Handles the transition between days.
-
-**Automatic rollover:** On app load, the server checks if today.txt contains tasks with created_timestamp from a previous day. If so, rollover executes automatically before returning data.
-
-**Rollover process:**
-
-1. Any pending or in-progress tasks in today.txt move to carryover.txt with status "carried"
-2. Clear today.txt
-3. User sees the carryover banner on the fresh day's view
-
 ## 4. Data Directory Structure
 
 ```
 data/
-  today.txt           # Current day's task list
+  today.txt           # Pending and in-progress tasks (persists across days)
   completed.txt       # All completed tasks (append-only log)
-  carryover.txt       # Incomplete tasks from previous days
 ```
 
 All files are created automatically by the server if they don't exist.
@@ -263,12 +233,6 @@ Defaults to `3001`. Override with `PORT=XXXX npm start`.
 |  Daily Dashboard                       [Standup]  |
 +--------------------------------------------------+
 |                                                   |
-|  Warning: N tasks carried over from previous days |
-|  +---------------------------------------------+ |
-|  | Task description (date)                      | |
-|  |                   [Pull into today] [Drop]   | |
-|  +---------------------------------------------+ |
-|                                                   |
 |  +---------------------------------------------+ |
 |  | + Add a task...          [Planned] [Add]     | |
 |  +---------------------------------------------+ |
@@ -297,7 +261,6 @@ Defaults to `3001`. Override with `PORT=XXXX npm start`.
 | Timestamps on tasks | Enables standup generation, carryover age display, and future velocity tracking. |
 | Planned/unplanned type field | Captures whether work was intentional or reactive. Low friction default. |
 | Append-only completed.txt | Simple, no data loss. Serves as a permanent log. |
-| Separate carryover.txt | Cleanly separates undecided tasks from today's active list. |
 | Local server, not pure browser | Real text files on disk. Scriptable, backupable, versionable. |
 | React SPA with Vite | Appropriate for a single-purpose interactive app. Fast dev experience. |
 | Squash on completed tasks | Allows consolidating granular work items into meaningful summaries for standups. |

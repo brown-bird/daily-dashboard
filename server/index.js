@@ -5,7 +5,6 @@ const path = require('path');
 const tasksRouter = require('./routes/tasks');
 const completedRouter = require('./routes/completed');
 const standupRouter = require('./routes/standup');
-const rolloverRouter = require('./routes/rollover');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -17,7 +16,6 @@ app.use(express.json());
 app.use('/api/tasks', tasksRouter);
 app.use('/api/completed', completedRouter);
 app.use('/api/standup', standupRouter);
-app.use('/api', rolloverRouter);
 
 app.use(express.static(DIST));
 app.get('/{*path}', (req, res) => res.sendFile(path.join(DIST, 'index.html')));

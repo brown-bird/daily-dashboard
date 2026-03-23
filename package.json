@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server/index.js",
     "build": "cd client && npm run build",
+    "test": "cd server && npm test",
     "dev:server": "cd server && npx nodemon index.js",
     "dev:client": "cd client && npx vite",
     "dev": "npx concurrently \"npm run dev:server\" \"npm run dev:client\""

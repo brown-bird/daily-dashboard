@@ -6,8 +6,7 @@ const DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
 
 const FILES = {
   TODAY: path.join(DATA_DIR, 'today.txt'),
-  COMPLETED: path.join(DATA_DIR, 'completed.txt'),
-  CARRYOVER: path.join(DATA_DIR, 'carryover.txt')
+  COMPLETED: path.join(DATA_DIR, 'completed.txt')
 };
 
 function ensureDataDir() {
