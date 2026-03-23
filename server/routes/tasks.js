@@ -102,13 +102,14 @@ router.post('/:id/complete', (req, res) => {
   res.json(completed);
 });
 
-// POST /api/tasks/:id/uncomplete — reopen a completed task as in-progress
+// POST /api/tasks/:id/uncomplete — reopen a completed task as in-progress or pending
 router.post('/:id/uncomplete', (req, res) => {
   const task = removeTask(FILES.COMPLETED, req.params.id);
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
   }
-  task.status = 'in-progress';
+  const status = req.body?.status === 'pending' ? 'pending' : 'in-progress';
+  task.status = status;
   delete task.completed;
   appendTask(FILES.TODAY, task);
   res.json(task);

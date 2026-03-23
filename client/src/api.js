@@ -30,8 +30,8 @@ export const startTask = (id) =>
   request(`/tasks/${id}/start`, { method: 'POST' });
 export const unstartTask = (id) =>
   request(`/tasks/${id}/unstart`, { method: 'POST' });
-export const uncompleteTask = (id) =>
-  request(`/tasks/${id}/uncomplete`, { method: 'POST' });
+export const uncompleteTask = (id, status = 'in-progress') =>
+  request(`/tasks/${id}/uncomplete`, { method: 'POST', body: JSON.stringify({ status }) });
 
 export const fetchCompleted = (date) =>
   request(addTz(`/completed${date ? `?date=${date}` : ''}`));

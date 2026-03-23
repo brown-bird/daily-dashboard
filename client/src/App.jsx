@@ -69,6 +69,12 @@ export default function App() {
     setTasks(prev => [...prev, task]);
   };
 
+  const handleUncompleteToTodo = async (id) => {
+    const task = await api.uncompleteTask(id, 'pending');
+    setCompletedToday(prev => prev.filter(t => t.id !== id));
+    setTasks(prev => [...prev, task]);
+  };
+
   const handleUpdate = async (id, updates) => {
     const updated = await api.updateTask(id, updates);
     setTasks(prev => prev.map(t => t.id === id ? updated : t));
@@ -197,6 +203,7 @@ export default function App() {
           onUpdate={handleUpdateCompleted}
           onDelete={handleDeleteCompleted}
           onUncomplete={handleUncomplete}
+          onUncompleteToTodo={handleUncompleteToTodo}
           squashMode={squashMode}
           selectedForSquash={selectedForSquash}
           onToggleSquashMode={toggleSquashMode}

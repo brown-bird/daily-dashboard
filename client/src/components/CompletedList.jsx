@@ -5,6 +5,7 @@ export default function CompletedList({
   onUpdate,
   onDelete,
   onUncomplete,
+  onUncompleteToTodo,
   squashMode,
   selectedForSquash,
   onToggleSquashMode,
@@ -126,11 +127,18 @@ export default function CompletedList({
               {!squashMode && (
                 <div className="task-actions">
                   <button
-                    className="action-btn reopen-btn"
+                    className="action-btn start-btn"
                     onClick={() => onUncomplete(task.id)}
-                    title="Reopen task"
+                    title="Move back to in-progress"
                   >
-                    Reopen
+                    In-progress
+                  </button>
+                  <button
+                    className="action-btn back-btn"
+                    onClick={() => onUncompleteToTodo(task.id)}
+                    title="Move back to todo"
+                  >
+                    Todo
                   </button>
                   <button
                     className="delete-btn"

@@ -65,7 +65,7 @@ export default function TaskItem({ task, section, onStart, onUnstart, onComplete
         )}
         {section === 'in-progress' && (
           <>
-            <button className="action-btn back-btn" onClick={() => onUnstart(task.id)} title="Move back to todo">Back</button>
+            <button className="action-btn back-btn" onClick={() => onUnstart(task.id)} title="Move back to todo">Todo</button>
             <button className="action-btn done-btn" onClick={() => onComplete(task.id)} title="Mark complete">Done</button>
           </>
         )}
