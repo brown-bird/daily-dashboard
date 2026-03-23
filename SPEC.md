@@ -50,7 +50,10 @@ A minimal API server whose only job is reading/writing text files and exposing t
 | POST | /api/tasks | Add a new task to today's list |
 | PUT | /api/tasks/:id | Update a task (edit text, change type) |
 | DELETE | /api/tasks/:id | Remove a task from today's list |
+| POST | /api/tasks/:id/start | Move a task from pending to in-progress |
+| POST | /api/tasks/:id/unstart | Move a task from in-progress back to pending |
 | POST | /api/tasks/:id/complete | Move a task from today to completed (with timestamp) |
+| POST | /api/tasks/:id/uncomplete | Reopen a completed task as in-progress |
 | PUT | /api/tasks/reorder | Rewrite today.txt in the given order |
 | GET | /api/completed?date=YYYY-MM-DD | Return completed tasks, optionally filtered by date |
 | PUT | /api/completed/:id | Update a completed task's text or type |
@@ -81,7 +84,7 @@ id|created_timestamp|status|type|text
 |-------|--------|---------|
 | id | UUID v4 (first 8 chars) | a1b2c3d4 |
 | created_timestamp | ISO 8601 | 2026-03-20T08:15:00.000Z |
-| status | pending, done, carried | pending |
+| status | pending, in-progress, done, carried | pending |
 | type | planned or unplanned | planned |
 | text | Free-form task description | Review PR #482 for auth refactor |
 
@@ -122,17 +125,29 @@ b1c2d3e4|2026-03-18T08:30:00.000Z|carried|planned|Update API docs for v2 endpoin
 
 ### 3.1 Daily Task Planning (Main View)
 
-The primary interface. Shows today's tasks in a list with the ability to add, edit, reorder, and complete items.
+The primary interface. Shows today's tasks in three vertical sections: **Todo**, **In Progress**, and **Done today**.
+
+**Three-section layout:**
+
+Tasks progress through three states in a single vertical column:
+- **Todo** (top): New and pending tasks. Actions: "Start" (→ In Progress), "Complete" (→ Done).
+- **In Progress** (middle): Tasks actively being worked on. Actions: "Back" (→ Todo), "Done" (→ Done).
+- **Done today** (bottom): Completed tasks with strikethrough styling. Actions: "Reopen" (→ In Progress).
+
+The normal flow is Todo → In Progress → Done, but tasks can skip steps (e.g., complete directly from Todo) or move backwards (e.g., reopen from Done to In Progress).
 
 **Behaviors:**
 
-- **Add task:** Text input at top of list. Pressing Enter or clicking Add creates the task with a pending status and current timestamp.
-- **Complete task:** Checkbox action. Moves the task from today.txt to completed.txt, appending a completed_timestamp. Task visually moves to a "Done today" section below the active list (strikethrough styling).
-- **Edit task:** Inline editing -- click the task text to modify it. Saves on blur or Enter. Cancel with Escape.
-- **Delete task:** Remove without completing. Delete button appears on hover.
-- **Reorder:** Drag-and-drop to set priority order. The server rewrites today.txt to match the new order -- line position in the file is the source of truth for display order.
+- **Add task:** Text input at top of the page. Pressing Enter or clicking Add creates the task with a pending status and current timestamp. New tasks appear in the Todo section.
+- **Start task:** "Start" button moves a task from Todo to In Progress (sets status to in-progress).
+- **Complete task:** "Complete" or "Done" button moves a task from Todo or In Progress to Done (moves from today.txt to completed.txt with completed_timestamp).
+- **Reopen task:** "Reopen" button on a completed task moves it back to In Progress (removes from completed.txt, adds to today.txt with in-progress status).
+- **Move back:** "Back" button on an In Progress task moves it back to Todo (sets status back to pending).
+- **Edit task:** Inline editing -- click the task text to modify it. Saves on blur or Enter. Cancel with Escape. Works in all three sections.
+- **Delete task:** Remove without completing. Delete button appears on hover. Works in all three sections.
+- **Reorder:** Drag-and-drop to set priority order within both the Todo and In Progress sections independently.
 
-**Carryover banner:** If carryover.txt has items when the app loads, show a notification section at the top: "You have N tasks carried over from previous days." Each carryover task has two actions: Pull into today (moves to today.txt) or Drop (removes from carryover.txt).
+**Carryover banner:** If carryover.txt has items when the app loads, show a notification section at the top: "You have N tasks carried over from previous days." Each carryover task has two actions: Pull into today (moves to today.txt as pending) or Drop (removes from carryover.txt).
 
 ### 3.2 Editable Completed Tasks
 
@@ -170,7 +185,7 @@ Generates a formatted summary for daily standups.
 
 1. App calls GET /api/standup which assembles:
    - **Yesterday:** All tasks from completed.txt where completed_timestamp falls on the previous workday
-   - **Today:** All tasks currently in today.txt (the plan for the day)
+   - **Today:** All tasks currently in today.txt (the plan for the day). In-progress tasks are marked with a 🔄 indicator and listed before pending tasks.
    - **Carried over:** Any items in carryover.txt (flagged as unfinished)
 2. Display the standup in a formatted preview panel
 3. User can review the text before copying
@@ -200,7 +215,7 @@ Handles the transition between days.
 
 **Rollover process:**
 
-1. Any pending tasks in today.txt move to carryover.txt with status "carried"
+1. Any pending or in-progress tasks in today.txt move to carryover.txt with status "carried"
 2. Clear today.txt
 3. User sees the carryover banner on the fresh day's view
 
@@ -232,15 +247,19 @@ All files are created automatically by the server if they don't exist.
 |  | + Add a task...          [Planned] [Add]     | |
 |  +---------------------------------------------+ |
 |                                                   |
-|  TODAY                                            |
-|  :: [] Review PR #482 for auth refactor        x  |
-|  :: [] Write migration script for user table   x  |
+|  TODO                                             |
+|  :: Write migration script  [Start] [Complete] x  |
+|  :: Update API docs         [Start] [Complete] x  |
+|                                                   |
+|  IN PROGRESS                                      |
+|  :: Review PR #482          [Back] [Done]      x  |
 |                                                   |
 |  DONE TODAY                            [Squash]   |
-|  [check] Set up staging environment    10:30 AM   |
+|  [check] Set up staging environment  [Reopen]     |
+|                                         10:30 AM  |
 |                                                   |
 +--------------------------------------------------+
-|  Tasks today: 2 active . 1 done                   |
+|  Tasks: 2 todo · 1 in progress · 1 done           |
 +--------------------------------------------------+
 ```
 

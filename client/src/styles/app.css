@@ -225,20 +225,6 @@ body {
   cursor: grabbing;
 }
 
-.complete-btn {
-  background: none;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-  color: #aaa;
-  padding: 0;
-  line-height: 1;
-}
-
-.complete-btn:hover {
-  color: #198754;
-}
-
 .task-text {
   flex: 1;
   font-size: 0.9rem;
@@ -258,6 +244,51 @@ body {
   outline: none;
 }
 
+.task-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.task-item:hover .task-actions,
+.completed-item:hover .task-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  padding: 2px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 0.7rem;
+  color: #666;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.action-btn:hover {
+  border-color: #999;
+  color: #333;
+}
+
+.action-btn.done-btn:hover {
+  border-color: #198754;
+  color: #198754;
+}
+
+.action-btn.start-btn:hover {
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+
+.action-btn.reopen-btn:hover {
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+
 .delete-btn {
   background: none;
   border: none;
@@ -266,12 +297,6 @@ body {
   cursor: pointer;
   padding: 0 4px;
   line-height: 1;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-
-.task-item:hover .delete-btn {
-  opacity: 1;
 }
 
 .delete-btn:hover {

@@ -4,6 +4,7 @@ export default function CompletedList({
   tasks,
   onUpdate,
   onDelete,
+  onUncomplete,
   squashMode,
   selectedForSquash,
   onToggleSquashMode,
@@ -123,13 +124,22 @@ export default function CompletedList({
               )}
               <span className="completed-time">{time}</span>
               {!squashMode && (
-                <button
-                  className="delete-btn"
-                  onClick={() => onDelete(task.id)}
-                  title="Delete completed task"
-                >
-                  ×
-                </button>
+                <div className="task-actions">
+                  <button
+                    className="action-btn reopen-btn"
+                    onClick={() => onUncomplete(task.id)}
+                    title="Reopen task"
+                  >
+                    Reopen
+                  </button>
+                  <button
+                    className="delete-btn"
+                    onClick={() => onDelete(task.id)}
+                    title="Delete completed task"
+                  >
+                    ×
+                  </button>
+                </div>
               )}
             </div>
           );

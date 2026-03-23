@@ -1,4 +1,10 @@
 const BASE = '/api';
+const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+function addTz(path) {
+  const sep = path.includes('?') ? '&' : '?';
+  return `${path}${sep}tz=${encodeURIComponent(TZ)}`;
+}
 
 async function request(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, {
@@ -20,9 +26,15 @@ export const completeTask = (id) =>
   request(`/tasks/${id}/complete`, { method: 'POST' });
 export const reorderTasks = (orderedIds) =>
   request('/tasks/reorder', { method: 'PUT', body: JSON.stringify({ orderedIds }) });
+export const startTask = (id) =>
+  request(`/tasks/${id}/start`, { method: 'POST' });
+export const unstartTask = (id) =>
+  request(`/tasks/${id}/unstart`, { method: 'POST' });
+export const uncompleteTask = (id) =>
+  request(`/tasks/${id}/uncomplete`, { method: 'POST' });
 
 export const fetchCompleted = (date) =>
-  request(`/completed${date ? `?date=${date}` : ''}`);
+  request(addTz(`/completed${date ? `?date=${date}` : ''}`));
 export const updateCompleted = (id, updates) =>
   request(`/completed/${id}`, { method: 'PUT', body: JSON.stringify(updates) });
 export const deleteCompleted = (id) =>
@@ -30,8 +42,8 @@ export const deleteCompleted = (id) =>
 export const squashCompleted = (taskIds, text) =>
   request('/completed/squash', { method: 'POST', body: JSON.stringify({ taskIds, text }) });
 
-export const checkRollover = () => request('/rollover/check');
-export const executeRollover = () => request('/rollover/execute', { method: 'POST' });
+export const checkRollover = () => request(addTz('/rollover/check'));
+export const executeRollover = () => request(addTz('/rollover/execute'), { method: 'POST' });
 export const fetchCarryover = () => request('/carryover');
 export const acceptCarryover = (id) =>
   request(`/carryover/${id}/accept`, { method: 'POST' });

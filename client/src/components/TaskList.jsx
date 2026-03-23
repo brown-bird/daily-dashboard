@@ -2,7 +2,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import TaskItem from './TaskItem';
 
-export default function TaskList({ tasks, onReorder, onComplete, onUpdate, onDelete }) {
+export default function TaskList({ tasks, section, onReorder, onStart, onUnstart, onComplete, onUpdate, onDelete, emptyMessage }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
@@ -17,7 +17,7 @@ export default function TaskList({ tasks, onReorder, onComplete, onUpdate, onDel
   };
 
   if (tasks.length === 0) {
-    return <p className="empty-state">No tasks yet — add one above</p>;
+    return <p className="empty-state">{emptyMessage || 'No tasks'}</p>;
   }
 
   return (
@@ -28,6 +28,9 @@ export default function TaskList({ tasks, onReorder, onComplete, onUpdate, onDel
             <TaskItem
               key={task.id}
               task={task}
+              section={section}
+              onStart={onStart}
+              onUnstart={onUnstart}
               onComplete={onComplete}
               onUpdate={onUpdate}
               onDelete={onDelete}

@@ -65,6 +65,32 @@ router.delete('/:id', (req, res) => {
   res.status(204).end();
 });
 
+// POST /api/tasks/:id/start — move task to in-progress
+router.post('/:id/start', (req, res) => {
+  const { id } = req.params;
+  const tasks = readTasks(FILES.TODAY);
+  const idx = tasks.findIndex(t => t.id === id);
+  if (idx === -1) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+  tasks[idx].status = 'in-progress';
+  writeTasks(FILES.TODAY, tasks);
+  res.json(tasks[idx]);
+});
+
+// POST /api/tasks/:id/unstart — move task back to pending
+router.post('/:id/unstart', (req, res) => {
+  const { id } = req.params;
+  const tasks = readTasks(FILES.TODAY);
+  const idx = tasks.findIndex(t => t.id === id);
+  if (idx === -1) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+  tasks[idx].status = 'pending';
+  writeTasks(FILES.TODAY, tasks);
+  res.json(tasks[idx]);
+});
+
 // POST /api/tasks/:id/complete — complete a task
 router.post('/:id/complete', (req, res) => {
   const task = removeTask(FILES.TODAY, req.params.id);
@@ -74,6 +100,18 @@ router.post('/:id/complete', (req, res) => {
   const completed = completeTask(task);
   appendTask(FILES.COMPLETED, completed);
   res.json(completed);
+});
+
+// POST /api/tasks/:id/uncomplete — reopen a completed task as in-progress
+router.post('/:id/uncomplete', (req, res) => {
+  const task = removeTask(FILES.COMPLETED, req.params.id);
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+  task.status = 'in-progress';
+  delete task.completed;
+  appendTask(FILES.TODAY, task);
+  res.json(task);
 });
 
 module.exports = router;

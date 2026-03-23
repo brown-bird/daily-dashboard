@@ -2,15 +2,16 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { FILES, readTasks, writeTasks, removeTask } = require('../lib/fileStore');
+const { toLocalDate } = require('../lib/dateUtils');
 
-// GET /api/completed?date=YYYY-MM-DD
+// GET /api/completed?date=YYYY-MM-DD&tz=America/Boise
 router.get('/', (req, res) => {
   const tasks = readTasks(FILES.COMPLETED);
-  const { date } = req.query;
+  const { date, tz } = req.query;
   if (date) {
     const filtered = tasks.filter(t => {
       if (!t.completed) return false;
-      return t.completed.slice(0, 10) === date;
+      return toLocalDate(t.completed, tz) === date;
     });
     return res.json(filtered);
   }

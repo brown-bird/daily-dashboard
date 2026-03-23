@@ -1,23 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const { FILES, readTasks, writeTasks, appendTask, removeTask } = require('../lib/fileStore');
+const { getLocalDate, toLocalDate } = require('../lib/dateUtils');
 
 // GET /api/rollover/check
 router.get('/rollover/check', (req, res) => {
-  const today = new Date().toISOString().slice(0, 10);
+  const tz = req.query.tz;
+  const today = getLocalDate(tz);
   const tasks = readTasks(FILES.TODAY);
-  const stale = tasks.filter(t => t.created.slice(0, 10) !== today);
+  const stale = tasks.filter(t => toLocalDate(t.created, tz) !== today);
   res.json({ needed: stale.length > 0, staleTasks: stale });
 });
 
 // POST /api/rollover/execute
 router.post('/rollover/execute', (req, res) => {
-  const today = new Date().toISOString().slice(0, 10);
+  const tz = req.query.tz;
+  const today = getLocalDate(tz);
   const tasks = readTasks(FILES.TODAY);
-  const pending = tasks.filter(t => t.status === 'pending');
+  const incomplete = tasks.filter(t => t.status === 'pending' || t.status === 'in-progress');
 
-  // Move pending tasks to carryover with 'carried' status
-  for (const task of pending) {
+  // Move incomplete tasks to carryover with 'carried' status
+  for (const task of incomplete) {
     task.status = 'carried';
     appendTask(FILES.CARRYOVER, task);
   }
@@ -25,7 +28,7 @@ router.post('/rollover/execute', (req, res) => {
   // Clear today.txt
   writeTasks(FILES.TODAY, []);
 
-  res.json({ carriedOver: pending });
+  res.json({ carriedOver: incomplete });
 });
 
 // GET /api/carryover

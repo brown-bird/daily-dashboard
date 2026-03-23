@@ -15,7 +15,10 @@ export default function App() {
   const [squashMode, setSquashMode] = useState(false);
   const [selectedForSquash, setSelectedForSquash] = useState(new Set());
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString('en-CA');
+
+  const todoTasks = tasks.filter(t => t.status === 'pending');
+  const inProgressTasks = tasks.filter(t => t.status === 'in-progress');
 
   const loadData = useCallback(async () => {
     const [todayTasks, completed, carryoverTasks] = await Promise.all([
@@ -44,10 +47,26 @@ export default function App() {
     setTasks(prev => [...prev, task]);
   };
 
+  const handleStart = async (id) => {
+    const updated = await api.startTask(id);
+    setTasks(prev => prev.map(t => t.id === id ? updated : t));
+  };
+
+  const handleUnstart = async (id) => {
+    const updated = await api.unstartTask(id);
+    setTasks(prev => prev.map(t => t.id === id ? updated : t));
+  };
+
   const handleComplete = async (id) => {
     const completed = await api.completeTask(id);
     setTasks(prev => prev.filter(t => t.id !== id));
     setCompletedToday(prev => [...prev, completed]);
+  };
+
+  const handleUncomplete = async (id) => {
+    const task = await api.uncompleteTask(id);
+    setCompletedToday(prev => prev.filter(t => t.id !== id));
+    setTasks(prev => [...prev, task]);
   };
 
   const handleUpdate = async (id, updates) => {
@@ -94,9 +113,16 @@ export default function App() {
     });
   };
 
-  const handleReorder = async (reorderedTasks) => {
-    setTasks(reorderedTasks);
-    await api.reorderTasks(reorderedTasks.map(t => t.id));
+  const handleReorderTodo = async (reorderedTasks) => {
+    const newTasks = [...reorderedTasks, ...inProgressTasks];
+    setTasks(newTasks);
+    await api.reorderTasks(newTasks.map(t => t.id));
+  };
+
+  const handleReorderInProgress = async (reorderedTasks) => {
+    const newTasks = [...todoTasks, ...reorderedTasks];
+    setTasks(newTasks);
+    await api.reorderTasks(newTasks.map(t => t.id));
   };
 
   const handleAcceptCarryover = async (id) => {
@@ -139,13 +165,30 @@ export default function App() {
         <AddTask onAdd={handleAdd} />
 
         <section>
-          <h2>Today</h2>
+          <h2>Todo</h2>
           <TaskList
-            tasks={tasks}
-            onReorder={handleReorder}
+            tasks={todoTasks}
+            section="todo"
+            onReorder={handleReorderTodo}
+            onStart={handleStart}
             onComplete={handleComplete}
             onUpdate={handleUpdate}
             onDelete={handleDelete}
+            emptyMessage="No tasks yet — add one above"
+          />
+        </section>
+
+        <section>
+          <h2>In Progress</h2>
+          <TaskList
+            tasks={inProgressTasks}
+            section="in-progress"
+            onReorder={handleReorderInProgress}
+            onUnstart={handleUnstart}
+            onComplete={handleComplete}
+            onUpdate={handleUpdate}
+            onDelete={handleDelete}
+            emptyMessage="Start a task to move it here"
           />
         </section>
 
@@ -153,6 +196,7 @@ export default function App() {
           tasks={completedToday}
           onUpdate={handleUpdateCompleted}
           onDelete={handleDeleteCompleted}
+          onUncomplete={handleUncomplete}
           squashMode={squashMode}
           selectedForSquash={selectedForSquash}
           onToggleSquashMode={toggleSquashMode}
@@ -163,7 +207,7 @@ export default function App() {
 
       <footer className="app-footer">
         <span>
-          Tasks today: {tasks.length} active · {completedToday.length} done
+          Tasks today: {todoTasks.length} todo · {inProgressTasks.length} in progress · {completedToday.length} done
         </span>
       </footer>
 

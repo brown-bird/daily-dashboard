@@ -52,13 +52,20 @@ router.get('/', (req, res) => {
     text += '\n';
   }
 
-  if (todayTasks.length > 0 || completedToday.length > 0) {
+  const inProgressTasks = todayTasks.filter(t => t.status === 'in-progress');
+  const pendingTasks = todayTasks.filter(t => t.status === 'pending');
+
+  if (pendingTasks.length > 0 || inProgressTasks.length > 0 || completedToday.length > 0) {
     text += '## Today\n';
     completedToday.forEach(t => {
       const marker = t.type === 'unplanned' ? ' \u26a1 unplanned' : '';
       text += `- \u2705 ${t.text}${marker}\n`;
     });
-    todayTasks.forEach(t => {
+    inProgressTasks.forEach(t => {
+      const marker = t.type === 'unplanned' ? ' \u26a1 unplanned' : '';
+      text += `- \ud83d\udd04 ${t.text}${marker}\n`;
+    });
+    pendingTasks.forEach(t => {
       text += `${formatTaskLine(t)}\n`;
     });
     text += '\n';

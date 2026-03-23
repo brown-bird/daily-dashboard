@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-export default function TaskItem({ task, onComplete, onUpdate, onDelete }) {
+export default function TaskItem({ task, section, onStart, onUnstart, onComplete, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
 
@@ -41,13 +41,6 @@ export default function TaskItem({ task, onComplete, onUpdate, onDelete }) {
   return (
     <div ref={setNodeRef} style={style} className="task-item">
       <span className="drag-handle" {...attributes} {...listeners}>⠿</span>
-      <button
-        className="complete-btn"
-        onClick={() => onComplete(task.id)}
-        title="Complete task"
-      >
-        ☐
-      </button>
       {editing ? (
         <input
           className="edit-input"
@@ -63,13 +56,27 @@ export default function TaskItem({ task, onComplete, onUpdate, onDelete }) {
           {task.type === 'unplanned' && <span className="unplanned-badge"> ⚡</span>}
         </span>
       )}
-      <button
-        className="delete-btn"
-        onClick={() => onDelete(task.id)}
-        title="Delete task"
-      >
-        ×
-      </button>
+      <div className="task-actions">
+        {section === 'todo' && (
+          <>
+            <button className="action-btn start-btn" onClick={() => onStart(task.id)} title="Start working">Start</button>
+            <button className="action-btn done-btn" onClick={() => onComplete(task.id)} title="Mark complete">Complete</button>
+          </>
+        )}
+        {section === 'in-progress' && (
+          <>
+            <button className="action-btn back-btn" onClick={() => onUnstart(task.id)} title="Move back to todo">Back</button>
+            <button className="action-btn done-btn" onClick={() => onComplete(task.id)} title="Mark complete">Done</button>
+          </>
+        )}
+        <button
+          className="delete-btn"
+          onClick={() => onDelete(task.id)}
+          title="Delete task"
+        >
+          ×
+        </button>
+      </div>
     </div>
   );
 }
