@@ -5,7 +5,7 @@ const { parseTask, serializeTask } = require('./task');
 const DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
 
 const FILES = {
-  TODAY: path.join(DATA_DIR, 'today.txt'),
+  TODAY: path.join(DATA_DIR, 'todo.txt'),
   COMPLETED: path.join(DATA_DIR, 'completed.txt')
 };
 
