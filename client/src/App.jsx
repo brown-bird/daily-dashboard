@@ -143,7 +143,7 @@ export default function App() {
         <AddTask onAdd={handleAdd} />
 
         <section>
-          <h2>Todo</h2>
+          <h2>TODO <span className="section-count">{todoTasks.length}</span></h2>
           <TaskList
             tasks={todoTasks}
             section="todo"
@@ -157,7 +157,7 @@ export default function App() {
         </section>
 
         <section>
-          <h2>In Progress</h2>
+          <h2>IN PROGRESS <span className={`section-count${inProgressTasks.length >= 3 ? ' section-count--warn' : ''}`}>{inProgressTasks.length}</span></h2>
           <TaskList
             tasks={inProgressTasks}
             section="in-progress"

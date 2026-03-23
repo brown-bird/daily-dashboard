@@ -75,7 +75,7 @@ export default function CompletedList({
   return (
     <div className="completed-section">
       <div className="completed-header">
-        <h2>Done today</h2>
+        <h2>DONE TODAY <span className="section-count">{tasks.length}</span></h2>
         {tasks.length >= 2 && (
           <button
             className="squash-toggle-btn"
