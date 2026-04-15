@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AddTask from './components/AddTask';
 import TaskList from './components/TaskList';
 import CompletedList from './components/CompletedList';
+import PastCompletedList from './components/PastCompletedList';
 import StandupSummary from './components/StandupSummary';
 import * as api from './api';
 import './styles/app.css';
@@ -9,6 +10,7 @@ import './styles/app.css';
 export default function App() {
   const [tasks, setTasks] = useState([]);
   const [completedToday, setCompletedToday] = useState([]);
+  const [completedPast, setCompletedPast] = useState([]);
   const [showStandup, setShowStandup] = useState(false);
   const [squashMode, setSquashMode] = useState(false);
   const [selectedForSquash, setSelectedForSquash] = useState(new Set());
@@ -19,12 +21,25 @@ export default function App() {
   const inProgressTasks = tasks.filter(t => t.status === 'in-progress');
 
   const loadData = useCallback(async () => {
-    const [todayTasks, completed] = await Promise.all([
+    const pastDays = [1, 2, 3].map(n => {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      const date = d.toLocaleDateString('en-CA');
+      const label = n === 1
+        ? `Yesterday — ${d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}`
+        : d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+      return { date, label };
+    });
+
+    const [todayTasks, completed, ...pastResults] = await Promise.all([
       api.fetchTasks(),
-      api.fetchCompleted(today)
+      api.fetchCompleted(today),
+      ...pastDays.map(d => api.fetchCompleted(d.date))
     ]);
+
     setTasks(todayTasks);
     setCompletedToday(completed);
+    setCompletedPast(pastDays.map((d, i) => ({ label: d.label, date: d.date, tasks: pastResults[i] })));
   }, [today]);
 
   useEffect(() => {
@@ -82,6 +97,13 @@ export default function App() {
   const handleDeleteCompleted = async (id) => {
     await api.deleteCompleted(id);
     setCompletedToday(prev => prev.filter(t => t.id !== id));
+  };
+
+  const handleDeletePastCompleted = async (id) => {
+    await api.deleteCompleted(id);
+    setCompletedPast(prev =>
+      prev.map(day => ({ ...day, tasks: day.tasks.filter(t => t.id !== id) }))
+    );
   };
 
   const handleSquash = async (summaryText) => {
@@ -181,6 +203,11 @@ export default function App() {
           onToggleSquashMode={toggleSquashMode}
           onToggleSquashSelection={toggleSquashSelection}
           onSquash={handleSquash}
+        />
+
+        <PastCompletedList
+          days={completedPast}
+          onDelete={handleDeletePastCompleted}
         />
       </main>
 
